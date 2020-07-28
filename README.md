@@ -77,7 +77,7 @@ toLocaleTimeString() ——以特定实现的格式显示时、分、秒;
 toUTCString() ——以特定于实现的格式完整的UTC日期；  
 日期与时间的方法：  
 | 方法 | 说明 |
-|:-- | :-- |
+| -- | -- |
 | getTime() | 返回表示时间的毫秒数 |
 | setTime(毫秒) | 以毫秒设置日期 |
 | getFullYear() | 取得四位数的年份|
