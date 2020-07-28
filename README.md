@@ -181,7 +181,7 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 `alert(descriptor.configurable); //false`  
 #### 创建对象
 使用object构造函数有明显的缺点就是使用同一个接口创建很多对象，会产生大量重复代码。  
-- 工厂模式  
+##### 工厂模式  
 这种模式抽象了创建具体对象的过程，用函数来封装以特定接口创建对象的细节。  
 `function createPerson(name, age, job){
   var o = new Object();
@@ -195,7 +195,7 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 }`  
 `var person1 = createPerson("aaa", 18, "aaaaa")`  
 `var person2 = createPerson("bbb", 19, "bbbbb")`  
-- 构造函数模式  
+##### 构造函数模式  
 构造函数可以用来创建特定类型的对象，可以创建自定义的构造函数从而定义自定义对象类型的属性和方法。  
 `function Person(name, age, job){
     this.name = name;
@@ -211,3 +211,50 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 1. 没有显式的创建对象；
 2. 直接将属性和方法赋给了this对象；
 3. 没有return语句。  
+要创建Person的新实例，必须使用new操作符。以这种方式调用构造函数实际上会有四个步骤：  
+1. 创建一个新对象  
+2. 将构造函数的作用域赋给新对象(this就指向了新对象)  
+3. 执行构造函数中的代码(为这个新对象添加属性)  
+4. 返回新对象  
+在构造函数模式中，person1与person2分别保存着Person的一个不同实例，两个对象都有一个constructor(构造函数)属性，该属性指向Person  
+`alert(person1.constructor == Person); //true`  
+`alert(person2.constructor == Person); //true`  
+创建自定义的构造函数意味着可以将它的实例标识为一种特定的类型。  
+- 将构造函数当做函数  
+构造函数与函数的不同之处就在于调用的方式不同。只要可以通过new操作符来使用，就可以称为构造函数。  
+// 当做构造函数  
+`var person = new Person("aa", 18, "aaa"); //构造函数`  
+`person.say(); //aa`  
+// 当做普通函数  
+`Person("bb", 19, "bbb"); //作为普通函数`  
+`window.say(); //bb`    
+//在另一个对象的作用域中调用  
+`var o = new Object();`  
+`Person.call(o, "cc", 20, "ccc");`  
+`o.say(); //cc`  
+- 构造函数的问题  
+每个方法都要在每个实例上重新创建一次。  
+`function Person(name, age, job){
+  this.name = name;
+  this.age = age;
+  this.job = job;
+  this.say = say;
+  }`  
+`function say(){
+  alert(this.name);
+  }`  
+`var person1 = new Person("aa", 18, "aaa");`  
+`var person2 = new Person("bb", 19, "bbb");`    
+将say函数定义转到构造函数外部，在构造函数内部将say属性设置成等于全局的say函数，这样say包含的是一个指向函数的指针，因此在person1和person2对象就共享了在全局作用域中定义的一个say函数。但在全局作用域下定义的say函数实际上只能被某个对象调用，不符合全局的事实，自定义的引用类型就没有封装性。  
+##### 原型模式
+我们所创建的每个函数都有一个prototype(原型)属性，这个属性是一个指针，指向一个对象，这个对象的用途是包含可以由特定类型的所有实例共享的属性和方法。prototype就是通过调用构造函数而创建的那个对象实例的原型对象，那么使用原型对象的好处是可以让所有的对象实例共享它所包含的属性和方法。不必在构造函数中定义对象的实例信息，而是将这些信息添加到原型对象中。   
+`function Person(){}`  
+`Persoon.prototype.name = "aa";`  
+`Person.prototype.age = 18;`  
+`Person.prototype.job = "aaa";`  
+`Person.prototype.say = function(){ alert(this.name)}`  
+`var person1 = new Person();`  
+`person1.say(); //aa`  
+`var person2 = new Person();`  
+`person2.say(); //aa`  
+`alert(person1.say == person2.say); //true`  
