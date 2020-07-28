@@ -165,5 +165,49 @@ Set：在写入属性的时候调用的函数，默认为undefined。
 - 定义多个属性  
 ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可以通过描述符一次定义多个属性。方法接收两个参数，第一个是要添加或修改其属性的对象，第二个对象的属性与第一个对象中要添加或修改的属性一一对应。  
 `var book = {};`  
-`object.defineProperty(book, { _year: {value: 2004},
-edition: {value: 1},year: {get: function(){return this._year},set: function(newValue){if(newValue > 2004){this._year = newValue;this.edition +=newValue - 2004}}}});`  
+`object.defineProperty(book,
+  {
+    _year: {value: 2004},
+    edition: {value: 1},
+    year:
+    {get: function(){return this._year},
+    set: function(newValue)
+    {if(newValue > 2004){this._year = newValue;this.edition +=newValue - 2004}}}});`  
+以上代码在book对象上定义了两个数据属性(\_year和edition)和一个访问器属性(year)。  
+- 读取属性的特性  
+使用Object.getOwnPropertyDescriptor()方法，可以取得给定属性的描述符。方法接收两个参数，属性所在的对象和要读取器描述符的属性名称。返回值是一个对象，如果是访问器属性，这个对象的属性有Configurable、Enumerable、get、set；如果是数据属性，这个对象的属性有Configurable、enumerable、Writable、value。  
+`var descriptor = Object.getOwnPropertyDescriptor(book, "_year");`  
+`alert(descriptor.value); //2004`    
+`alert(descriptor.configurable); //false`  
+#### 创建对象
+使用object构造函数有明显的缺点就是使用同一个接口创建很多对象，会产生大量重复代码。  
+- 工厂模式  
+这种模式抽象了创建具体对象的过程，用函数来封装以特定接口创建对象的细节。  
+`function createPerson(name, age, job){
+  var o = new Object();
+  o.name = name;
+  o.age = age;
+  o.job = job;
+  o.say = function(){
+    alert(this.name);
+  };
+  return o;
+}`  
+`var person1 = createPerson("aaa", 18, "aaaaa")`  
+`var person2 = createPerson("bbb", 19, "bbbbb")`  
+- 构造函数模式  
+构造函数可以用来创建特定类型的对象，可以创建自定义的构造函数从而定义自定义对象类型的属性和方法。  
+`function Person(name, age, job){
+    this.name = name;
+    this.age = age;
+    this.job = job;
+    this.say = function(){
+    alert(this,name);
+    };
+}`  
+`var person1 = new Person("aaa", 18, "aaaa")`  
+`var person2 = new Person("bbb", 19, "bbbb")`  
+在这个例子中，Person()函数取代了createPerson()函数。Person()中的代码与createPerson()存在部分不同之处；  
+1. 没有显式的创建对象；
+2. 直接将属性和方法赋给了this对象；
+3. 没有return语句。  
