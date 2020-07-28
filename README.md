@@ -98,3 +98,72 @@ toUTCString() ——以特定于实现的格式完整的UTC日期；
 
 #### RegExp类型
 ECMAScript通过RegExp类型来支持正则表达式  
+`var expression = / pattern / flag;`  
+pattern是正则表达式，可以包含字符类，限定符，分组，向前查找以及反向引用。每个表达式可以带有一个或多个标志(flag)，用以表明正则表达式的行为。  
+1. g：表示全局模式，该模式会被应用于所有字符串。
+2. i：表示不区分大小写模式，匹配时忽略大小写。
+3. m：表示多行模式，在匹配到末尾时继续向下一行查找。  
+元字符必须要转义才能使用，包括  
+`( [ { \ ^ $ | ) ？ * + . ] }`  
+若想匹配这些字符串必须将其转义  
+`var pattern = /\[bc\]at/i`匹配第一个[bc]at，不区分带小写。
+也可以写为  
+`var pattern = new RegExp("[bc]at", i)`  
+- RegExp实例属性  
+1. global：布尔值，表示是否设置g标志。
+2. ignoreCase：布尔值，表示是否设置i标志。
+3. lastIndex：整数，表示开始搜索下一个匹配项字符位置。
+4. multiline：布尔值，表示是否设置i标志。
+5. source：正则表达式字符串表示。  
+`var pattern = /\[bc\]at/`  
+`alert(pattern.global);` //false  
+`alert(pattern.ignoreCase);` //true
+- RegExp实例方法  
+主要方法为exec(),专门为捕获组设计的。exec()接收一个参数，即要应用模式的字符串，然后返回第一个匹配信息的数组，在没有匹配项的情况下返回null。返回数组为array的实例，但包含两个额外的属性，index和input。index表示匹配项在字符串的位置索引，input表示应用正则表达式的字符串。
+
+### 二、面向对象的程序设计
+#### 1.理解对象
+- 属性类型  
+1. 数据类型  
+数据类型包含一个数据值的位置，在此位置可以进行读写值。  
+Configurable；表示能否delete删除属性重新定义属性，能否修改属性的特性，或者能否将属性修改为可访问属性。  
+Enumerable：表示能否通过for-in循环返回属性。  
+Writable：表示能否修改属性的数据值。  
+Value：包含这个属性的数据值。  
+`var person = {};`  
+`Object.defineProperty(person, "name", {
+    Writable: false;
+    value: "aaa"
+  });`
+`alert(person.name); //aaa`  
+`person.name = "bbb";`  
+`alert(person.name); // bbb`  
+在调用Object.defineproperty()方法时，若不指定参数，则三个配置都为false。  
+2. 访问器属性  
+访问器属性不包括数据值，而是包含一对setter，getter函数(不必须)，在读取访问器属性的时候，会调用getter函数，这个函数会返回有效的值，在写入访问器属性的时候，会调用setter函数传入新值，这个函数负责处理数据。  
+Configurable：同上。  
+Enumerable： 同上。  
+Get：在读取属性值时调用的函数，默认undefined。  
+Set：在写入属性的时候调用的函数，默认为undefined。  
+访问器属性不能直接定义，必须使用object.defineproperty()来定义。  
+`var book = {
+  _year: 2004,
+  edition; 1
+}`  
+`Object.definepropety(book, "year", {
+    get: function(){
+      return this._year;
+  },
+    set: function(newValue){
+      this._year = newValue;
+      this.edition += newValue - 2004;
+  }
+});`  
+`book.year = 2005;`  
+`alert(book.edition); //2`  
+不需要同时指定setter与getter，单独指定getter表示属性不可写入，单独指定setter表示属性不可读。  
+- 定义多个属性  
+ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可以通过描述符一次定义多个属性。方法接收两个参数，第一个是要添加或修改其属性的对象，第二个对象的属性与第一个对象中要添加或修改的属性一一对应。  
+`var book = {};`  
+`object.defineProperty(book, { _year: {value: 2004},
+edition: {value: 1},year: {get: function(){return this._year},set: function(newValue){if(newValue > 2004){this._year = newValue;this.edition +=newValue - 2004}}}});`  
