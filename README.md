@@ -179,7 +179,7 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 `var descriptor = Object.getOwnPropertyDescriptor(book, "_year");`  
 `alert(descriptor.value); //2004`    
 `alert(descriptor.configurable); //false`  
-#### 创建对象
+#### 2.创建对象
 使用object构造函数有明显的缺点就是使用同一个接口创建很多对象，会产生大量重复代码。  
 ##### 工厂模式  
 这种模式抽象了创建具体对象的过程，用函数来封装以特定接口创建对象的细节。  
@@ -258,3 +258,94 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 `var person2 = new Person();`  
 `person2.say(); //aa`  
 `alert(person1.say == person2.say); //true`  
+- 1.理解原型对象  
+新创建一个函数，就会为该函数创建一个prototype属性，这个属性指向函数的原型对象。默认情况下，所有的原型对象都会获得一个constructor属性，这个属性包含了一个指向prototype属性所在函数的指针。  
+创建了自定义的构造函数后，原型对象默认只会获得constructor属性；其他方法都是从Object中继承而来，当调用一个构造函数创建一个新的实例后，实例内部将包含一个指针，指向构造函数的原型对象，这个连接只存在于实例与构造函数的原型对象之间，而不是在实例与构造函数之间。  
+`person.prototype.constructor == person; //构造函数的prototype属性的constructor指针指回了构造函数`  
+`person1.__proto__ == person.prototype; //构造函数的实例中的__proto__指向了构造函数的原型。`  
+构造函数的实例中都包含一个内部属性，这个属性仅仅指向了person.prototype;换句话说，实例与构造函数之间没有直接的关系，虽然实例中不包含属性与方法，但是可以通过查找对象的属性来调用原型的属性与方法。  
+isPrototypeOf()方法可以确定对象之间是否在村这种关系，如果实例对象中的__proto__属性指向了调用isPrototypeOf方法的对象(person.prototype)，那么这个方法返回true。  
+`function person(){};
+person.prototype.name = "aa";
+person.prototype.say = function(){
+	alert(this.name);
+};
+var person1 = new person;
+person1.say(); //aa;
+alert(person.prototype.isPrototypeOf(peron1)); //true`  
+ECMAScript 5中新增一个Object.getPrototypeOf()方法，这个方法返回__proto__的值。  
+`alert(Object.getPrototypeOf(person1) == person.prototype); //true`  
+`alert(Object.getPrototypeOf(peron1).name);`  
+第一行表示返回该实例的原型对象，第二行表示取得原型对象中的name值。当代码读取某个对象的属性时，就会执行一次搜索，目标是具有给定名字的属性，若在实例中找到，则返回属性值，若没有找到，则继续搜索指针指向的原型对象，若原型对象中存在该属性则返回。  
+当实例中添加一个属性值与原型相同时，就会屏蔽原型对象中的相同属性值，但不会修改。也可以使用delete操作符将实例中的同名属性值删除，则可以重新访问原型中的该属性值。  
+hasOwnPrototype()方法可以检测一个属性是存在于实例，还是在原型对象中。这个方法只在给定属性存在于对象的实例中时，才会返回true。  
+- 2.原型与in操作符  
+in操作符有两种使用形式：单独使用与在for in中循环使用。单独使用时，in操作符会在通过对象能够访问给定属性时返回true，无论该属性是在实例中还是在原型中。  
+在使用for in循环时，返回的是所有能通过对象访问的、可枚举的属性，其中既包括实例中的属性也包括原型中的属性。屏蔽了原型中不可枚举的属性的实例属性也会在for in循环中返回。  
+若要去的对象上所有可枚举的实例属性，可以使用ECMAScript 5中的Object.keys()方法。该方法接收一个对象作为参数，返回一个包含所有可枚举属性的字符串数组。  
+`Object.keys(person.prototype); //["name", "say", "age"]`  
+`Object.keys(person1); //["name"]`  
+若想得到所有实例的属性，无论是否可以枚举，则可以使用Object.getOwnPrototypeNames()方法。  
+`Object.getOwnPrototypeNames(person.prototype);`  
+`Object.getOwnPrototypeNames(person1);`  
+- 3.更简单的原型语法  
+使用对象字面量的形式创建对象。  
+`var o = {};`  
+`var person.prototype = {
+  name: "aa",
+  age: 18
+}`  
+将person.prototype设置为等于一个以对象字面量形式创建的新对象，最终的结果相同，但是constructor属性不在指向原person，因为每次新建一个函数，就会同时创建它的prototype对象，这个对象会自动获得constructor属性，本质上将会重写默认的prototype对象，因此constructor属性就变为了新对象的constructor属性，指向了Object构造函数，而不是person函数。此时instanceof操作符仍会返回正确的结果，但是无法通过constructor确定对象的类型。但可以在创建新的对象字面量时将constructor属性指向原对象。  
+`function person(){}`  
+`person.prototype = {
+  constructor: person,
+  name: "aa",
+  age: 18
+  }`  
+- 4.原型的动态性  
+原型的查找过程是一次搜索，因此对原型对象所做的任何修改都能够立即从实例上反映出来。  
+`var person = new Person();`  
+`Person.prototype.say = function(){
+  alert("hi");
+  }
+  person.say(); //hi`  
+在创建实例后为原型对象添加方法，实例仍可以访问到这个方法，原因为实例与原型之间的松散连接关系。  
+但如果重写了整个原型对象，在调用构造函数的时候会为其添加一个指向最初原型的prototype指针，也就是__proto__,而把原型修改为另一个对象就等于切断了构造函数与最初原型之间的联系。实例中的指针指向原型，而不是构造函数。  
+`function person(){};`  
+`var person1 = new person();`  
+`person.prototype = {`  
+`	name: "aaaaa",`  
+	`age: 19999,`  
+	`say: function(){`  
+	`console.log(this.name);`	  
+	`}`  
+`};`  
+`person1.say(); //person1.say is not a function`  
+`person1.__proto__ = person.prototype;`  
+`person1.say(); //aaaaa `  
+- 5.原生对象的原型   
+所有原生引用类型(Object, Array, String等)都在其构造函数的原型上定义了方法，在Array.prototype中可以找到sort()方法，而且String.prototype中可以找到subString()方法。  
+`alert(typeof Array.prototype.sort); //function`  
+通过原生对象的原型，不仅可以取得默认方法的引用，也可以定义新方法。像修改自定义对象的原型一样修改原生对象的原型，随时添加方法。  
+- 6.原型对象的问题  
+首先原型对象省略了为构造函数传递初始化参数这一环节，所有实例在默认情况下将会取得相同的属性值。  
+原型中所有的属性是被很多实例共享的这种共享对于函数来说非常适合，但对于引用类型值的属性来说就会有问题。  
+- 7.组合使用构造函数模式和原型模式  
+构造函数模式用于定义实例属性，而原型模式用于定义方法和共享的属性。结果每个实例自己都会有一份实例属性的副本，又同时共享着对方法的引用，最大限度节省内存。这种混合模式还支持向构造函数传递参数。  
+`function person(name){  
+  this.name = name;  
+	this.friends = ["a", "b"];  
+};
+person.prototype = {  
+	constructor: person,  
+	say: function(){  
+    alert(this.name);  
+  }  
+}`  
+`var person1 = new person("aaa");`  
+`person1.friends.push("ccccc");`  
+`alert(person1.friends); //a,b,ccccc`  
+`alert(person2.friends); //a,b`  
+`alert(person1.say === person2.say); //true`  
+在上述代码中，实例的属性是在构造函数中定义的，二所有实例共享的属性constructor和方法say都是在原型中定义的，当修改了person1.friends，并不会影响到person2实例中的属性。  
+#####  动态原型模式  
