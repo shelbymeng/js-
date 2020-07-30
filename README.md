@@ -359,4 +359,32 @@ person.prototype = {
 	};
 };`
 `var person1 = new person("aaa");`  
-`person1.say();`
+`person1.say();`  
+在say()不存在时才会将其添加到原型中，这段代码只会在初次调用构造函数时才会执行。
+if语句检查的可以是初始化之后应该存在的属性或者方法，不需要将
+所有的属性和方法全部检查。对于采用这种模式创建的对象，
+可以使用instanceof操作符检查它的类型。  
+##### 寄生构造函数模式  
+这种模式的基本思想是创建一个函数，该函数的作用仅仅是封装创建对象的代码，
+然后再返回新创建的对象。  
+`function person(name){
+    var o = new Object();
+    o.name = name;
+    o.say = function(){
+        alert(this.name);
+    }
+    return o;
+}`  
+`var person1 = new person("aaa");`  
+`person1.say(); //aaa`
+
+
+
+
+
+
+
+
+
+
+
