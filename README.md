@@ -349,3 +349,14 @@ person.prototype = {
 `alert(person1.say === person2.say); //true`  
 在上述代码中，实例的属性是在构造函数中定义的，二所有实例共享的属性constructor和方法say都是在原型中定义的，当修改了person1.friends，并不会影响到person2实例中的属性。  
 #####  动态原型模式  
+将所有的信息全部封装在构造函数中，通过在构造函数中初始化原型，又保持了同时使用构造函数和原型的优点。简而言之可以通过检查某个应该存在的方法是否有效，来决定是否需要初始化原型。  
+`function person(name){
+  this.name = name;
+  if(typeof this.say != "function"){
+		person.prototype.say = function({
+			alert(this.name);
+		};
+	};
+};`
+`var person1 = new person("aaa");`  
+`person1.say();`
