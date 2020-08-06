@@ -383,3 +383,76 @@ if语句检查的可以是初始化之后应该存在的属性或者方法，不
 ##### 稳妥构造函数模式  
 所谓稳妥对象，指的是没有公共属性，而且其方法也不引用this对象。稳妥构造函数遵循与寄生构造函数类似的模式，有两点不同：一是新创建对象的实例方法不引用this；二是不使用new操作符调用构造函数。  
 #### 3.继承  
+##### 原型链  
+ECMAScript中描述了原型链的概念，将原型链作为实现继承的主要方法。基本思想是利用原型链让一个引用类型继承另一个引用类型的属性和方法。每个构造函数都有一个原型对象，原型对象都包含一个指向构造函数的指针，而实例都包含一个指向原型对象内部的指针。假如让原型对象等于另一个类型的实例，此时的原型对象将包含一个指向另一个原型的指针，相应另一个原型对象中也包含着指向另一个够赞函数的指针。若另一个原型又是另一个类型的实例，上述关系成立，就构成了实例与原型的链条。  
+实现原型链有一种基本模式：  
+`function SuperType(){
+  this.property = true;
+}`  
+`SuperType.prototype.getSuperValue = function(){
+    return this.property;
+}`  
+`function SubType(){
+  this.subproperty = false;
+}`  
+`SubType.prototype = new SuperType();`  
+`SubType.prototype.getSubValue = function(){
+  return this.subproperty;
+}`  
+`var instance = new SubType();`  
+`alert(instance.getSuperValue); //true`  
+1. 不要忘记默认的原型  
+代码中创建了两个类型，SuperType与SubType，每个类型都有一个属性和方法，主要区别是SubType继承了SuperType，继承是通过创建SuperType的实例，并将实例赋给SubType.prototype实现的，相当于SubType的原型将作为SuperType的实例，实例中有一个指向SuperType原型的指针。这个实现的本质是重写原型对象，代之以一个新类型的实例。原来存在于SuperType的实例中的所有属性和方法，现在也存在于SubType.prototype中。但是没有使用SubType默认提供的原型，而是给它换了一个原型，这个新原型就是SuperType的实例。所以心源性不仅具有作为一个SuperType的实例所拥有的的全部属性和方法，其内部还有一个指向SuperType原型的指针。所以instance指向SubType的原型，SubType的原型又指向了SuperType的原型。getSuperValue方法依然在SuperType.prototype中，但是property则位于SubType.prototype中。这是因为property是一个实例的属性，而getSuperValue则是一个原型方法。那么SubType.prototype现在是SuperType的实例，那么property当然位于该实例中。  
+2. 确定原型与实例的关系  
+两种方式：instanceof操作符与isPrototypeOf操作符。  
+`instance instanceof Object`  
+`instance instanceof SuperType`  
+`instance instanceof SubType`  
+由于原型链的关系，可以说instance是以上三种类型中的任何一种类型的实例，所以三个构造函数都返回true。  
+只有是原型链中出现过的原型，都可以说是该原型链所派生的实例的原型。  
+`Object.prototype.isPrototypeOf(instance)`    
+`SuperType.prototype.isPrototypeOf(instance)`    
+`SubType.prototype.isPrototypeOf(instance)`    
+以上代码都会返回true。  
+3. 谨慎定义方法  
+子类中有时需要重写超类型中的某个方法，或者添加超类型中不存在的某个方法，但给原型添加方法的代码一定要放在替换原型的语句之后。  
+在通过原型链实现继承时，不能使用对象字面量创建原型方法，因为这样就会重写原型链。  
+4. 原型链的问题  
+最主要的问题是包含来自引用类性值的原型。包含引用类型值的原型属性会被所有的实例共享，这正是为什么要在构造函数中，而不是在原型对象中定义属性的原因。在通过原型来实现继承时，原型实际上会变为另一个类型的实例。于是，原来的实例属性就变成了现在的原型属性。  
+第二个问题是：在创建子类型的实例时，不能向超类型的构造函数中传递参数。实际上应该说是没有办法在不影响所有对象的实例的情况下，给超类型的构造函数传递参数。  
+
+##### 借用构造函数  
+在子类型构造函数的内部调用超类型构造函数，函数只是在特定环境下执行代码的对象，因此通过使用apply和call方法也可以再新创建的对象上执行构造函数。  
+`function SuperType(){
+  this.color = ["red", "green"];
+}`  
+`function SubType(){
+  SuperType.call(this);
+}`  
+`var instance1 = new SubType();`  
+`instance1.color.push("black");`  
+`alert(instance1.color); //["red", "green", "black"]`  
+`var instace2 = new SubType();`  
+`alert(instace2.color); //["red", "green"]`  
+1. 传递参数  
+相较于原型链而言，借用构造函数可以在子类型构造函数中向超类型构造函数传递参数。  
+`function SuperType(name){
+  this.name = name;
+}`  
+`function SubType(){
+  //继承了SuperType，同时传递了参数  
+  SuperType.call(this, "aaa");
+  //实例属性  
+  this.age = 23;
+}`  
+`var instance = new SubType();`  
+`alert(instance.name); //aaa`    
+`alert(instance.age); //23`  
+2. 借用构造函数的问题  
+如果仅仅是借用构造函数那么将无法避免构造函数模式存在的问题——方法都在构造函数中定义，因此函数复用无从谈起。并且在超类型的原型中定义的方法，对于子类型而言也是不可见的，结果就是所有的类型只能通过构造函数模式。  
+
+##### 组合继承  
+
+##### 原型式继承  
+##### 寄生式继承  
+##### 寄生组合式继承  
