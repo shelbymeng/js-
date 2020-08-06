@@ -179,7 +179,8 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 `var descriptor = Object.getOwnPropertyDescriptor(book, "_year");`  
 `alert(descriptor.value); //2004`    
 `alert(descriptor.configurable); //false`  
-#### 2.创建对象
+
+#### 2.创建对象  
 使用object构造函数有明显的缺点就是使用同一个接口创建很多对象，会产生大量重复代码。  
 ##### 工厂模式  
 这种模式抽象了创建具体对象的过程，用函数来封装以特定接口创建对象的细节。  
@@ -246,6 +247,7 @@ ECMAScript定义一个Object.defineproperty()的方法，利用这个方法可�
 `var person1 = new Person("aa", 18, "aaa");`  
 `var person2 = new Person("bb", 19, "bbb");`    
 将say函数定义转到构造函数外部，在构造函数内部将say属性设置成等于全局的say函数，这样say包含的是一个指向函数的指针，因此在person1和person2对象就共享了在全局作用域中定义的一个say函数。但在全局作用域下定义的say函数实际上只能被某个对象调用，不符合全局的事实，自定义的引用类型就没有封装性。  
+
 ##### 原型模式
 我们所创建的每个函数都有一个prototype(原型)属性，这个属性是一个指针，指向一个对象，这个对象的用途是包含可以由特定类型的所有实例共享的属性和方法。prototype就是通过调用构造函数而创建的那个对象实例的原型对象，那么使用原型对象的好处是可以让所有的对象实例共享它所包含的属性和方法。不必在构造函数中定义对象的实例信息，而是将这些信息添加到原型对象中。   
 `function Person(){}`  
@@ -348,6 +350,7 @@ person.prototype = {
 `alert(person2.friends); //a,b`  
 `alert(person1.say === person2.say); //true`  
 在上述代码中，实例的属性是在构造函数中定义的，二所有实例共享的属性constructor和方法say都是在原型中定义的，当修改了person1.friends，并不会影响到person2实例中的属性。  
+
 #####  动态原型模式  
 将所有的信息全部封装在构造函数中，通过在构造函数中初始化原型，又保持了同时使用构造函数和原型的优点。简而言之可以通过检查某个应该存在的方法是否有效，来决定是否需要初始化原型。  
 `function person(name){
@@ -373,18 +376,10 @@ if语句检查的可以是初始化之后应该存在的属性或者方法，不
     o.say = function(){
         alert(this.name);
     }
-    return o;
+    return o;  
 }`  
 `var person1 = new person("aaa");`  
-`person1.say(); //aaa`
-
-
-
-
-
-
-
-
-
-
-
+`person1.say(); //aaa`  
+##### 稳妥构造函数模式  
+所谓稳妥对象，指的是没有公共属性，而且其方法也不引用this对象。稳妥构造函数遵循与寄生构造函数类似的模式，有两点不同：一是新创建对象的实例方法不引用this；二是不使用new操作符调用构造函数。  
+#### 3.继承  
