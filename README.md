@@ -540,4 +540,127 @@ Object.create()方法的第二个参数，每个属性都是通过自己的描�
   subType.prototype = prototype;
 }`  
 这个函数接收两个参数：子类型构造函数和超类型构造函数。在函数内部，第一步创建超类型原型的一个副本。第二步为创建的副本添加constructor属性，从而弥补因为重写原型而失去默认的constructor属性。最后将新创建的对象赋值给子类型的原型。  
-这个例子高效率体现在只调用了一次SuperType构造函数，并且避免了在SubType.prototype上创建不必要的属性。与此同时原型链还能保持不变，因此可以正常使用instanceof和isPrototypeOf方法。寄生组合式继承是引用类型最理想的继承范式。  
+这个例子高效率体现在只调用了一次SuperType构造函数，并且避免了在SubType.prototype上创建不必要的属性。与此同时原型链还能保持不变，因此可以正常使用instanceof和isPrototypeOf方法。寄生组合式继承是引用类型最理想的继承范式。   
+### 三、函数表达式  
+定义函数的方式有两种：函数声明与函数表达式。  
+函数声明：  
+`function functionName(){//函数体}`  
+function关键字加函数名字。  
+函数声明有一个重要特征就是函数声明提升，意思是执行代码前会读取函数声明，这意味着可以把函数声明放在调用语句之后。  
+函数表达式：  
+`var functionName = function(arg0,arg1){//函数体}`  
+即创建一个函数并将它赋值给变量functionName。这种情况下创建的函数称为匿名函数，因为function关键字后面没有标识符。  
+函数表达式与其他表达式一样，在使用前必须先赋值。  
+
+#### 递归  
+递归函数是在一个函数通过名字调用自身的情况下构成的。  
+`function factorial(num){
+  if(num <= 1){
+    return 1;
+  }
+  else{
+    return num*factorial(num-1);
+  }
+}`  
+`var anotherFactorial = factorial;`  
+`factorial = null;`  
+`alert(anotherFactorial(4)); //error!`  
+以上代码将factorial()函数保存在anotherFactorial中，然后将factorial变量设置为null，结果指向原始函数的引用只剩下一个。但在接下来调用anotherFactorial()时，由于必须执行factorial，而factorial已经不再是函数，所以会导致错误。在这种情况下，使用arguments.callee可以解决这种问题。  
+arguments.callee是一个指向正在执行的函数的指针，因此可以用来实现对函数的递归调用。  
+`function factorial(num){
+  if(num <= 1){
+    return 1;
+  }else{
+    return num*arguments.callee(num-1);
+  }
+}`  
+通过使用arguments.callee代替函数名，可以确保无论怎样调用函数都不会出问题。因此在编写递归函数时，使用arguments.callee总比使用函数名更保险。严格模式下，也可以使用命名函数表达式来达成相同的效果。  
+`var factorial = (function f(num){
+  if(num <= 1){
+    return 1;
+  }else{
+    return num*f(num-1);
+  }
+});`  
+以上代码创建了一个名为f()的命名函数表达式，然后将它赋值给变量factorial。即便将函数赋值给另一个变量，函数的名字f依然有效，所以递归依然可以完成。  
+#### 闭包  
+闭包是指有权访问另一个函数作用域中变量的函数。创建闭包的常见方式就是在一个函数内部创建另一个函数。   
+`function createComparisonFunction(propertyName){
+  return function(obj1, obj2){
+    var value1 = obj1[propertyName];
+    var value2 = obj2[propertyName];
+    if(value1 < value2){
+      return -1;
+    }else{
+      return 0;
+    }
+  };
+}`  
+赋值语句时内部函数中的代码，这两行代码访问了外部函数中的变量propertyName。因为内部函数的作用域链中包含着createComparisonFunction()的作用域。  
+当某个函数被调用时，会创建一个执行环境及相应的作用域链。然后使用arguments和其他命名参数的值来初始化函数的活动对象。但在作用域链中，外部函数的活动始终处于第二位，外部函数的外部函数的活动对象处于第三位，直到作为作用域链终点的全局执行环境。在函数执行环境中，为读取和写入变量的值，就需要在作用域链中查找变量。  
+`function compare(val1, val2){
+  if(val1 < val2){
+    return -1;
+  }else if(val1 > val2){
+    return 1;
+  }else{
+    return 0;
+  }
+}`  
+`var res = compare(5, 10);`  
+以上代码定义了compare函数，然后在全局作用域中调用了它。当调用compare时，会创建一个arguments，val1，val2的活动对象。全局执行环境的变量对象(包含res和compare)在compare执行环境的作用域链中处于第三位。  
+后台每个执行环境都有一个表示变量的对象——变量对象。全局环境的变量对象始终存在，而像compare函数这样的局部环境的变量对象，则只在函数执行的过程中存在。在创建compare函数时，会创建一个预先包含全局变量对象的作用域链，这个作用域链被保存在内部的[[scope]]的属性中。当调用compare函数时，会为函数创建一个执行环境，然后通过复制函数的[[scope]]属性中的对象构建起执行环境的作用域链。此后，又有一个活动对象(在此作为变量对象使用)被创建并推入执行环境作用域链的前端。在这个例子中compare函数执行环境而言，其作用域链中包含两个变量对象：本地活动对象和全局变量对象。作用域链本质上是一个指向变量对象的指针列表，它只引用但不实际包含变量对象。  
+无论什么时候在函数中访问一个变量时，就会从作用域链中搜索具有相应名字的的变量。一般来说，当函数执行完毕，局部活动对象就会被销毁，内存中只保存全局作用域(全局执行环境的变量对象)。但是闭包情况又会不同。  
+在另一个函数内部定义的函数会将包括(即外部函数)的活动对象添加到它的作用域链中，在createComparisonFunction函数内部定义的匿名函数的作用域中，实际上将会包含外部函数createComparisonFunction的活动对象。  
+##### 1.闭包与变量  
+作用域链的这种配置机制引出了一个值得注意的副作用，即闭包只能取得包含函数中任何变量的最后一个值。闭包所保存的是整个变量对象，而不是某个特殊的变量。  
+`function createFunctions(){
+  var res = new Array();
+  for(var i=0; i < 10; i++){
+    res[i] = function(){
+      return i;
+    }
+  }
+  return res;
+}`  
+实际上每个函数都会返回10,。因为每个函数的作用域链中都保存着createFunctions函数的活动对象，所以它们引用的都是同一个变量i，当createFunctions函数返回后，变量i的值是10，此时每个函数都引用着保存变量i的同一个变量对象，所以在每个函数内部i的值都是10.但是可以通过创建另一个匿名函数强制让闭包行为符合预期。  
+`function createFunctions(){
+  var res = new Array();
+  for(var i=0; i < 10; i++){
+    res[i] = function(num){
+      return function(){
+        return num;
+      };
+    }(i);
+  }
+  return res;
+}`   
+重写后，每个函数都会返回各自不同的索引值。在这个版本中，没有直接把闭包赋值给数组，而是定义了一个匿名函数，并将立即执行该匿名函数的结果赋给数组。匿名函数有个参数num，也就是最终函数要返回的值，在调用每个匿名函数的时候，我们传入变量i。由于函数是按值传递的，所以就会将变量i的当前值复制给参数num。而在这个匿名函数内部，又创建并返回了一个访问num的闭包。这样res数组中的每个函数都有自己num变量的一个副本，因此可以返回不同值。  
+##### 2.关于this对象  
+在闭包中使用this对象也会导致一些问题。this对象是在运行时基于函数的执行环境绑定的：在全局函数中，this等于window，而当函数作为某个对象的方法调用时，this等于那个对象。不过匿名函数的执行环境具有全局性，因此其this对象通常指向window。  
+`var name = "aaa";`  
+`var obj = {
+  name = "bbb";
+  getName: function(){
+    return function(){
+      return this.name;
+    };
+  }
+};`  
+`alert(obj.getName()()); //aaa`  
+以上代码创建了一个全局变量name，有创建了一个包含name属性的对象。这个对象还包含着一个方法getName，它返回一个匿名函数，而匿名函数又返回this.name。由于getName返回一个函数，因此调用obj.getName就会立即调用它返回的函数，结果就是返回一个字符串，然而本例返回的是全局对象。  
+每个函数在被 调用时都会自动取得两个特殊变量：this和arguments。内部函数在搜索这两个变量时，只会搜索到其活动对象为止，因此永远不可能直接访问外部函数中这两个变量。当然，把外部作用域中的this对象保存在一个闭包能够访问到的变量里，就可以让闭包访问该对象了。  
+`var name = "aaa";`  
+`var obj = {
+  name = "bbb";
+  getName: function(){
+    var that = this;
+    return function(){
+      return that.name;
+    };
+  }
+};`  
+`alert(obj.getName()()); //bbb`  
+在定义匿名函数之前，我们把this对象赋值给一个that变量。而在定义闭包之后，闭包也可以访问这个比那辆，因为它是我们在包含函数中特意声明的一个变量。即使在函数返回之后，that也仍然引用着obj，所以在调用obj.getName就返回了bbb。  
+#### 模仿块级作用域  
+#### 私有变量  
