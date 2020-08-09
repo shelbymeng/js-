@@ -804,3 +804,86 @@ js不会告知是否多次声明同一个变量，遇到这种问题，它只会
 `alert(person2.getName()); //ccc`  
 本例中person构造函数与getName和setName方法一样，都有权访问私有变量name。在这种模式下，变量name就变成了一个静态的，由所有实例共享的属性。也就是说，在一个实例上调用setName会影响所有实例。而调用setName或者新建一个person实例都会赋予name属性一个新值。结果就是所有实例都会返回相同的值。  
 以这种方式创建静态私有变量会因为使用原型而增进代码复用，但每个实例都没有自己的私有变量。  
+##### 2.模块模式  
+上一节的模式是用于为自定义类型创建私有变量和特权方法的。而模块模式则是为单例创建私有变量和特权方法。所谓单例指的就是只有一个实例的对象。一般来说js是以对象字面量的方式来创建单例对象的。  
+`var single = {
+  name: value,
+  method: function(){
+    //方法代码
+  }
+};`  
+模块模式通过为单例添加私有变量和特权方法能够使其增强。  
+`var single = function(){
+  //私有变量和私有函数  
+  var privateVal = 10;
+  function privateFunction(){
+    return false;
+  }
+  //特权方法  
+  return {
+    publicProperty: true,
+    publicMethod: function(){
+      privateVal++;
+      return privateFunction();
+    }
+  };
+}();`  
+这个模块模式使用了一个返回对象的匿名函数。在这个匿名函数内部，首先定义了私有变量和函数。然后将一个对象字面量作为函数的值返回。返回的对象字面量中只包含可以公开的属性和方法。由于这个对象是在匿名函数内部定义的，因此它的公有方法有权访问私有变量和函数。从本质上来说，这个对象自面量定义的是单例的公共接口。这种模式在需要对单例进行某些初始化，同时又需要维护其私有变量时是非常有用的。  
+`var application = function(){
+  //私有变量和函数
+  var components = new Array();
+  //初始化
+  components.push(new BaseComponent());
+  //公共
+  return {
+    getComponent: function(){
+      return components.length;
+    },
+    registerComponent: function(component){
+      if(typeof component =="object"){
+        components.push(component);
+      }
+    }
+  };
+}()`  
+在web应用程序中，经常需要使用一个单例模式来管理应用程序级的消息。这个例子创建了一个用于管理组件的application对象。在创建这个对象的过程中，首先声明了一个私有的components数组，并向数组中添加了一个BaseComponent的新实例。而返回对象的getComponent和registerComponent方法，都是有权访问数组components的特权方法。前者是返回已注册的组件数目，后者用于注册新组件。  
+简言之，如果必须创建一个对象并以某些数据对其进行初始化，同时还要公开一些能够访问这些私有数据的方法，那么就可以代替块级模式。以这种模式创建的每个单例都是Object的实例，因为最终要通过一个对象字面量来表示它。毕竟单例通常都是作为全局对象存在的，我们不会将它传递给一个函数。因此没有必要使用instanceof操作符来检查其对象类型了。  
+##### 3.增强的模块模式  
+改进的模块模式，即在返回对象之前加入对其增强的代码。这种增强的的模块模式适合那些单例必须是某种类型的实例，同时还必须添加某些属性和方法对其加以增强的情况。  
+`var single = function(){
+  //私有变量和私有函数  
+  var privateVal = 10;
+  function privateFunction(){
+    return false;
+  }
+  //创建对象
+  var object = new CustomType();
+  //特权方法  
+  object.publicProperty = true;
+  object.publicMethod = function(){
+    privateVal++;
+    return privateFunction();
+  };
+  //返回这个对象
+  return object;
+}();`  
+创建application对象的方法增强。  
+`var application = function(){
+  //私有变量和函数
+  var components = new Array();
+  //初始化
+  components.push(new BaseComponent());
+  //创建application的一个局部副本
+  var app = new BaseComponent();
+  //公共接口
+  app.getComponent = function(){
+    return components.length;
+  };
+  app.registerComponent = function(component){
+    if(typeof component =="object"){
+      components.push(component);
+    }
+  };
+  return app;
+}();`  
+重写后的应用程序单例中，首先也应该定义私有变量。不同之处在于命名变量app的创建过程，因为它必须是BaseComponent的实例，这个实例实际上是application对象的局部变量版。此后我们又为app对象添加了能够访问私有变量的公有方法。最后一步是返回app对象，结果仍然是将它赋值给全局变量application。  
